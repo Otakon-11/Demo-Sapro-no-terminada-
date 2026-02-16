@@ -17,10 +17,10 @@ export default function Login({ onLogin }: LoginProps) {
 
         // Verificación local (sin necesidad de servidor)
         setTimeout(() => {
-            if (username === 'angel' && password === 'angel') {
-                onLogin('local-token-' + Date.now(), 'Angel')
+            if (username === 'Otakon' && password === '123456789') {
+                onLogin('local-token-' + Date.now(), 'Otakon')
             } else {
-                setError('Credenciales incorrectas')
+                setError('Contraseña incorrecta')
             }
             setLoading(false)
         }, 500)

@@ -1,9 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
+import Projects from './Proyects.tsx'
+import DashboardOverview from './DashboardOverview.tsx'
+import Commission from './Commission.tsx'
 
 interface DashboardProps {
     token: string
     user: string
     onLogout: () => void
+}
+
+interface Proyect {
+    id: string
+    name: string
+    description: string
+    createdAt: string
 }
 
 interface PasswordEntry {
@@ -21,10 +31,10 @@ interface FileEntry {
     uploadedAt: string
 }
 
-type ActiveView = 'passwords' | 'files'
+type ActiveView = 'overview' | 'passwords' | 'files' | 'projects' | 'users' | 'commissions' | 'reports'
 
 export default function Dashboard({ token, user, onLogout }: DashboardProps) {
-    const [activeView, setActiveView] = useState<ActiveView>('passwords')
+    const [activeView, setActiveView] = useState<ActiveView>('overview')
     const [passwords, setPasswords] = useState<PasswordEntry[]>([])
     const [files, setFiles] = useState<FileEntry[]>([])
     const [showAddPassword, setShowAddPassword] = useState(false)
@@ -197,23 +207,35 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
 
     return (
         <div className="dashboard">
-            {/* Sidebar */}
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-logo">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {/* Top Navigation */}
+            <header className="top-nav">
+                <div className="nav-left">
+                    <div className="nav-logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                         </svg>
                         <span>SAPRO</span>
                     </div>
                 </div>
 
-                <nav className="sidebar-nav">
+                <nav className="nav-links">
+                    <button
+                        className={`nav-item ${activeView === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveView('overview')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        Inicio
+                    </button>
                     <button
                         className={`nav-item ${activeView === 'passwords' ? 'active' : ''}`}
                         onClick={() => setActiveView('passwords')}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
@@ -223,47 +245,72 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                         className={`nav-item ${activeView === 'files' ? 'active' : ''}`}
                         onClick={() => setActiveView('files')}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
                         </svg>
                         Archivos PDF
                     </button>
+                    <button
+                        className={`nav-item ${activeView === 'projects' ? 'active' : ''}`}
+                        onClick={() => setActiveView('projects')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                        Proyectos
+                    </button>
+                    <button
+                        className={`nav-item ${activeView === 'commissions' ? 'active' : ''}`}
+                        onClick={() => setActiveView('commissions')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        Comisiones
+                    </button>
                 </nav>
 
-                <div className="sidebar-footer">
-                    <div className="user-info">
+                <div className="nav-right">
+                    <div className="nav-user">
                         <div className="user-avatar">{user.charAt(0).toUpperCase()}</div>
-                        <div className="user-details">
-                            <span className="user-name">{user}</span>
-                            <span className="user-role">Administrador</span>
-                        </div>
+                        <span className="user-name">{user}</span>
                     </div>
-                    <button className="logout-btn" onClick={onLogout}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <button className="logout-trigger" onClick={onLogout} title="Cerrar Sesión">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                             <polyline points="16 17 21 12 16 7" />
                             <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
-                        Salir
                     </button>
                 </div>
-            </aside>
+            </header>
 
             {/* Main content */}
             <main className="main-content">
                 {/* Top bar */}
                 <header className="top-bar">
                     <div>
-                        <h1>{activeView === 'passwords' ? '🔐 Contraseñas del Servidor' : '📄 Archivos PDF'}</h1>
+                        <h1>
+                            {activeView === 'overview' && '📊 Resumen General'}
+                            {activeView === 'commissions' && '💰 Gestión de Comisiones'}
+                            {activeView === 'passwords' && '🔐 Contraseñas del Servidor'}
+                            {activeView === 'files' && '📄 Archivos PDF'}
+                            {activeView === 'projects' && '🚀 Gestión de Proyectos'}
+                        </h1>
                         <p className="subtitle">
-                            {activeView === 'passwords'
-                                ? `${passwords.length} contraseña${passwords.length !== 1 ? 's' : ''} almacenada${passwords.length !== 1 ? 's' : ''}`
-                                : `${files.length} archivo${files.length !== 1 ? 's' : ''} almacenado${files.length !== 1 ? 's' : ''}`
-                            }
+                            {activeView === 'overview' && 'Vista rápida del estado de la empresa'}
+                            {activeView === 'commissions' && 'Administra y valida los pagos de comisiones'}
+                            {activeView === 'passwords' && `${passwords.length} contraseña${passwords.length !== 1 ? 's' : ''} almacenada${passwords.length !== 1 ? 's' : ''}`}
+                            {activeView === 'files' && `${files.length} archivo${files.length !== 1 ? 's' : ''} almacenado${files.length !== 1 ? 's' : ''}`}
+                            {activeView === 'projects' && 'Gestiona y rastrea el trabajo de tu equipo'}
                         </p>
                     </div>
-                    {activeView === 'passwords' ? (
+                    {activeView === 'passwords' && (
                         <button className="action-btn primary" onClick={() => { resetForm(); setShowAddPassword(true) }}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -271,7 +318,8 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                             </svg>
                             Nueva Contraseña
                         </button>
-                    ) : (
+                    )}
+                    {activeView === 'files' && (
                         <label className="action-btn primary upload-label">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -288,6 +336,15 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                                 disabled={uploading}
                             />
                         </label>
+                    )}
+                    {activeView === 'projects' && (
+                        <button className="action-btn primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Nuevo Proyecto
+                        </button>
                     )}
                 </header>
 
@@ -493,6 +550,26 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
+                {/* Projects View */}
+                {activeView === 'projects' && (
+                    <div className="content-area">
+                        <Projects />
+                    </div>
+                )}
+
+                {/* Overview View */}
+                {activeView === 'overview' && (
+                    <div className="content-area">
+                        <DashboardOverview />
+                    </div>
+                )}
+
+                {/* Commission View */}
+                {activeView === 'commissions' && (
+                    <div className="content-area">
+                        <Commission />
                     </div>
                 )}
             </main>

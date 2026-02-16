@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import Login from './pages/Login.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 
+import { RecentActivityProvider } from './context/RecentActivityContext'
+
 function App() {
     const [token, setToken] = useState<string | null>(null)
     const [user, setUser] = useState<string>('')
@@ -39,7 +41,11 @@ function App() {
         return <Login onLogin={handleLogin} />
     }
 
-    return <Dashboard token={token} user={user} onLogout={handleLogout} />
+    return (
+        <RecentActivityProvider>
+            <Dashboard token={token} user={user} onLogout={handleLogout} />
+        </RecentActivityProvider>
+    )
 }
 
 export default App
