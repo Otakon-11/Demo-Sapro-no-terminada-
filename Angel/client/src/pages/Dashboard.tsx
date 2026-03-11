@@ -33,33 +33,8 @@ interface FileEntry {
 
 type ActiveView = 'overview' | 'passwords' | 'files' | 'projects' | 'users' | 'commissions' | 'reports'
 
-const NAV_ITEMS: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Inicio', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg> },
-    { id: 'passwords', label: 'Contraseñas', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> },
-    { id: 'files', label: 'Archivos PDF', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg> },
-    { id: 'projects', label: 'Proyectos', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg> },
-    { id: 'commissions', label: 'Comisiones', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg> },
-]
-
 export default function Dashboard({ token, user, onLogout }: DashboardProps) {
     const [activeView, setActiveView] = useState<ActiveView>('overview')
-    const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('sapro_theme') as 'dark' | 'light') || 'dark')
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-    const [profileOpen, setProfileOpen] = useState(false)
-    const profileRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme)
-        localStorage.setItem('sapro_theme', theme)
-    }, [theme])
-
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false)
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
     const [passwords, setPasswords] = useState<PasswordEntry[]>([])
     const [files, setFiles] = useState<FileEntry[]>([])
     const [showAddPassword, setShowAddPassword] = useState(false)
@@ -235,74 +210,88 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
             {/* Top Navigation */}
             <header className="top-nav">
                 <div className="nav-left">
-                    <button className="hamburger-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title="Toggle Menu">
+                    <div className="nav-logo">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="3" y1="12" x2="21" y2="12" />
-                            <line x1="3" y1="6" x2="21" y2="6" />
-                            <line x1="3" y1="18" x2="21" y2="18" />
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                         </svg>
-                    </button>
-                    <div className="nav-brand">
                         <span>SAPRO</span>
                     </div>
                 </div>
 
-                <div className="nav-right" ref={profileRef}>
+                <nav className="nav-links">
                     <button
-                        type="button"
-                        className="nav-theme-btn"
-                        onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-                        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                        className={`nav-item ${activeView === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveView('overview')}
                     >
-                        {theme === 'dark' ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
-                        ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
-                        )}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        Inicio
                     </button>
-                    <button type="button" className="nav-profile-trigger" onClick={() => setProfileOpen(o => !o)} aria-expanded={profileOpen}>
+                    <button
+                        className={`nav-item ${activeView === 'passwords' ? 'active' : ''}`}
+                        onClick={() => setActiveView('passwords')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        Contraseñas
+                    </button>
+                    <button
+                        className={`nav-item ${activeView === 'files' ? 'active' : ''}`}
+                        onClick={() => setActiveView('files')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        Archivos PDF
+                    </button>
+                    <button
+                        className={`nav-item ${activeView === 'projects' ? 'active' : ''}`}
+                        onClick={() => setActiveView('projects')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                        Proyectos
+                    </button>
+                    <button
+                        className={`nav-item ${activeView === 'commissions' ? 'active' : ''}`}
+                        onClick={() => setActiveView('commissions')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        Comisiones
+                    </button>
+                </nav>
+
+                <div className="nav-right">
+                    <div className="nav-user">
                         <div className="user-avatar">{user.charAt(0).toUpperCase()}</div>
                         <span className="user-name">{user}</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 4, opacity: profileOpen ? 1 : 0.7 }}>
-                            <polyline points="6 9 12 15 18 9" />
+                    </div>
+                    <button className="logout-trigger" onClick={onLogout} title="Cerrar Sesión">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
                     </button>
-                    {profileOpen && (
-                        <div className="nav-profile-dropdown">
-                            <div className="profile-info">
-                                <div className="user-avatar">{user.charAt(0).toUpperCase()}</div>
-                                <div className="user-name">{user}</div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.toLowerCase().replace(/\s/g, '')}@cits.local</div>
-                            </div>
-                            <button type="button" className="profile-logout" onClick={() => { setProfileOpen(false); onLogout() }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                                Cerrar sesión
-                            </button>
-                        </div>
-                    )}
                 </div>
             </header>
 
-            {/* Sidebar Navigation */}
-            <aside className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}>
-                {NAV_ITEMS.map(({ id, label, icon }) => (
-                    <div
-                        key={id}
-                        className={`sidebar-item ${activeView === id ? 'active' : ''}`}
-                        onClick={() => setActiveView(id)}
-                    >
-                        <div className="sidebar-item-left">
-                            {icon}
-                            <span>{label}</span>
-                        </div>
-                        {id === 'passwords' && <span className="sidebar-badge">{passwords.length}</span>}
-                        {id === 'files' && <span className="sidebar-badge">{files.length}</span>}
-                    </div>
-                ))}
-            </aside>
-
             {/* Main content */}
-            <main className={`main-content ${!isSidebarOpen ? 'expanded' : ''}`}>
+            <main className="main-content">
                 {/* Top bar */}
                 <header className="top-bar">
                     <div>
@@ -347,6 +336,15 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                                 disabled={uploading}
                             />
                         </label>
+                    )}
+                    {activeView === 'projects' && (
+                        <button className="action-btn primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Nuevo Proyecto
+                        </button>
                     )}
                 </header>
 
@@ -557,7 +555,7 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                 {/* Projects View */}
                 {activeView === 'projects' && (
                     <div className="content-area">
-                        <Projects token={token} />
+                        <Projects />
                     </div>
                 )}
 
@@ -571,7 +569,7 @@ export default function Dashboard({ token, user, onLogout }: DashboardProps) {
                 {/* Commission View */}
                 {activeView === 'commissions' && (
                     <div className="content-area">
-                        <Commission token={token} />
+                        <Commission />
                     </div>
                 )}
             </main>

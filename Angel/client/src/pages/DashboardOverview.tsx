@@ -98,11 +98,11 @@ export default function DashboardOverview() {
                 <div style={{ ...headerStyle, justifyContent: 'space-between', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <h3 style={{ fontSize: '1.2rem', margin: 0 }}>Actividad Reciente</h3>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>Últimas actualizaciones de tu equipo</span>
+                        <span style={{ fontSize: '0.9rem', color: '#666', fontWeight: 400 }}>Últimas actualizaciones de tu equipo</span>
                     </div>
                     <button
                         onClick={() => setShowAll(!showAll)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem' }}
+                        style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '0.9rem' }}
                     >
                         {showAll ? 'Ver Menos' : 'Ver Todo'}
                     </button>
@@ -110,7 +110,7 @@ export default function DashboardOverview() {
 
                 <div className="activity-list" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                     {activities.length === 0 ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No hay actividad reciente</div>
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>No hay actividad reciente</div>
                     ) : (
                         displayedActivities.map((item, index) => {
                             const IconComponent = getIconComponent(item.iconType)
@@ -120,7 +120,7 @@ export default function DashboardOverview() {
                                     alignItems: 'flex-start',
                                     gap: '16px',
                                     padding: '16px 0',
-                                    borderBottom: index !== activities.length - 1 ? '1px solid var(--border-color)' : 'none'
+                                    borderBottom: index !== activities.length - 1 ? '1px solid #222' : 'none'
                                 }}>
                                     <div style={{
                                         width: '40px',
@@ -136,10 +136,10 @@ export default function DashboardOverview() {
                                         <IconComponent size={20} />
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0, lineHeight: '1.4' }}>
-                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.user}</span> {item.action} <span style={{ color: 'var(--text-primary)' }}>{item.target}</span>
+                                        <p style={{ color: '#e5e5e5', fontSize: '0.95rem', margin: 0, lineHeight: '1.4' }}>
+                                            <span style={{ fontWeight: 600, color: '#fff' }}>{item.user}</span> {item.action} <span style={{ color: '#fff' }}>{item.target}</span>
                                         </p>
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{item.time}</span>
+                                        <span style={{ color: '#666', fontSize: '0.85rem' }}>{item.time}</span>
                                     </div>
                                 </div>
                             )
@@ -170,7 +170,7 @@ export default function DashboardOverview() {
                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
@@ -192,7 +192,7 @@ export default function DashboardOverview() {
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333" />
                             <XAxis type="number" stroke="#888" />
                             <YAxis dataKey="name" type="category" width={100} stroke="#888" />
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} cursor={{ fill: 'var(--bg-glass)' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                             <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} name="Proyectos" />
                         </BarChart>
                     </ResponsiveContainer>
@@ -222,7 +222,7 @@ export default function DashboardOverview() {
                             </Pie>
                             <Tooltip
                                 formatter={(value: number | undefined) => [`$${(value || 0).toLocaleString()}`, 'Monto']}
-                                contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                                contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -240,7 +240,7 @@ export default function DashboardOverview() {
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis dataKey="month" stroke="#888" />
                             <YAxis stroke="#888" />
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }} />
                             <Legend />
                             <Line type="monotone" dataKey="iniciados" stroke="#3B82F6" strokeWidth={2} name="Iniciados" dot={{ r: 4, strokeWidth: 0, fill: '#3B82F6' }} />
                             <Line type="monotone" dataKey="terminados" stroke="#10B981" strokeWidth={2} name="Terminados" dot={{ r: 4, strokeWidth: 0, fill: '#10B981' }} />
@@ -260,7 +260,7 @@ export default function DashboardOverview() {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
                             <XAxis dataKey="month" stroke="#888" />
                             <YAxis stroke="#888" />
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} cursor={{ fill: 'var(--bg-glass)' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                             <Bar dataKey="ventas" fill="#8B5CF6" radius={[4, 4, 0, 0]} name="Unidades" />
                         </BarChart>
                     </ResponsiveContainer>
@@ -281,7 +281,7 @@ export default function DashboardOverview() {
                             <Radar name="Equipo Dev" dataKey="A" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.5} />
                             <Radar name="Equipo Design" dataKey="B" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.5} />
                             <Legend />
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff' }} />
                         </RadarChart>
                     </ResponsiveContainer>
                 </div>
@@ -292,9 +292,9 @@ export default function DashboardOverview() {
 }
 
 const cardStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-card)',
+    backgroundColor: '#0d0d0d', // var(--bg-card)
     borderRadius: '12px',
-    border: '1px solid var(--border-color)',
+    border: '1px solid #222', // var(--border-color)
     padding: '20px',
     display: 'flex',
     flexDirection: 'column',
@@ -306,6 +306,6 @@ const headerStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    color: 'var(--text-primary)',
+    color: '#ffffff', // var(--text-primary)
     fontWeight: 600
 }
