@@ -174,6 +174,7 @@ export default function Projects({ token }: ProjectsProps) {
                 value={form.descripcion}
                 onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
                 placeholder="Descripción opcional"
+                style={{ resize: 'none' }}
               />
             </div>
             <div className="form-group">
@@ -219,10 +220,10 @@ export default function Projects({ token }: ProjectsProps) {
               />
             </div>
             <div className="modal-actions">
-              <button type="button" className="modal-action-btn primary" onClick={handleCreate} disabled={saving}>
+              <button type="button" className="action-btn primary" onClick={handleCreate} disabled={saving}>
                 {saving ? 'Guardando...' : 'Crear proyecto'}
               </button>
-              <button type="button" className="modal-action-btn" onClick={() => !saving && setShowModal(false)}>
+              <button type="button" className="action-btn secondary" onClick={() => !saving && setShowModal(false)}>
                 Cancelar
               </button>
             </div>
@@ -237,7 +238,6 @@ export default function Projects({ token }: ProjectsProps) {
         .projects-modal .form-row { display: flex; gap: 16px; }
         .projects-modal .form-row .form-group { flex: 1; }
         .projects-modal .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-        .projects-modal .modal-action-btn:not(.primary) { background: var(--bg-glass); color: var(--text-secondary); }
       `}</style>
     </div>
   )

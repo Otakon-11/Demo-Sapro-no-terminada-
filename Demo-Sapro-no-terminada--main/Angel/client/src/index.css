@@ -47,10 +47,11 @@
     --text-muted: #888888;
     --accent-primary: #2563eb;
     --accent-hover: #1d4ed8;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
-    --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
+
 [data-theme="light"] .service-icon {
     background: rgba(0, 0, 0, 0.08);
     color: var(--text-primary);
@@ -65,6 +66,7 @@
 [data-theme="light"] .subtitle {
     color: #111111 !important;
 }
+
 [data-theme="light"] input,
 [data-theme="light"] select,
 [data-theme="light"] textarea {
@@ -76,6 +78,7 @@ select {
     background-color: var(--bg-card) !important;
     color: var(--text-primary) !important;
 }
+
 select option {
     background-color: var(--bg-card) !important;
     color: var(--text-primary) !important;
@@ -94,6 +97,36 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selección de texto */
+::selection {
+  background: rgba(0,120,215,0.35);
+  color: inherit;
+}
+
+::-moz-selection {
+  background: rgba(0,120,215,0.35);
+  color: inherit;
+}
+
+/* Evitar selección en gráficos */
+.recharts-wrapper,
+.recharts-wrapper * {
+  user-select: none;
+}
+
+/* Evitar problemas en SVG */
+svg {
+  user-select: none;
+}
+
+.dashboard-card {
+  user-select: text;
+}
+
+.dashboard-card svg {
+  user-select: none;
 }
 
 /* ======================================
@@ -360,7 +393,8 @@ body {
     left: 0;
     right: 0;
     height: 56px;
-    background: #0078D7; /* Solid blue header */
+    background: #0078D7;
+    /* Solid blue header */
     border-bottom: none;
     display: flex;
     align-items: center;
@@ -394,7 +428,8 @@ body {
 }
 
 .nav-brand-logo {
-    display: none; /* Hide default blocky logo for now if not matching image */
+    display: none;
+    /* Hide default blocky logo for now if not matching image */
 }
 
 .nav-right {
@@ -417,6 +452,7 @@ body {
     transition: var(--transition);
     padding: 6px;
 }
+
 .nav-theme-btn:hover {
     color: white;
     background: rgba(255, 255, 255, 0.2);
@@ -439,6 +475,7 @@ body {
 .hamburger-btn:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
 .nav-theme-btn:hover {
     color: var(--text-primary);
     background: var(--bg-glass-hover);
@@ -455,17 +492,21 @@ body {
     left: 0;
     height: calc(100vh - 56px);
     width: 250px;
-    background: var(--bg-primary); /* Changed to use theme background */
+    background: var(--bg-primary);
+    /* Changed to use theme background */
     color: var(--text-primary);
     transition: transform 0.15s ease-out;
     z-index: 90;
     display: flex;
     flex-direction: column;
     padding-top: 10px;
-    border-right: 1px solid var(--border-color); /* Add border to separate from main content in both modes */
+    border-right: 1px solid var(--border-color);
+    /* Add border to separate from main content in both modes */
 }
+
 [data-theme="light"] .sidebar {
-    background: var(--bg-primary); /* Changed to use theme background */
+    background: var(--bg-primary);
+    /* Changed to use theme background */
     color: var(--text-primary);
 }
 
@@ -478,7 +519,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 14px 20px;
-    color: var(--text-secondary); /* Use theme text */
+    color: var(--text-secondary);
+    /* Use theme text */
     text-decoration: none;
     cursor: pointer;
     border-left: 3px solid transparent;
@@ -487,12 +529,14 @@ body {
 }
 
 .sidebar-item:hover {
-    background: var(--bg-glass-hover); /* Use theme glass hover */
+    background: var(--bg-glass-hover);
+    /* Use theme glass hover */
     color: var(--text-primary);
 }
 
 .sidebar-item.active {
-    background: var(--bg-glass); /* Use theme glass */
+    background: var(--bg-glass);
+    /* Use theme glass */
     color: var(--text-primary);
     border-left-color: #0078D7;
     font-weight: 500;
@@ -531,6 +575,7 @@ body {
     cursor: pointer;
     transition: background 0.2s;
 }
+
 .nav-profile-trigger:hover {
     background: rgba(255, 255, 255, 0.2);
     color: white;
@@ -552,21 +597,25 @@ body {
     padding: 12px 0;
     z-index: 200;
 }
+
 .nav-profile-dropdown .profile-info {
     padding: 0 16px 12px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 8px;
 }
+
 .nav-profile-dropdown .profile-info .user-avatar {
     width: 40px;
     height: 40px;
     font-size: 1rem;
     margin-bottom: 6px;
 }
+
 .nav-profile-dropdown .profile-info .user-name {
     font-size: 0.95rem;
     font-weight: 600;
 }
+
 .nav-profile-dropdown .profile-logout {
     display: flex;
     align-items: center;
@@ -582,6 +631,7 @@ body {
     text-align: left;
     transition: var(--transition);
 }
+
 .nav-profile-dropdown .profile-logout:hover {
     background: rgba(239, 68, 68, 0.1);
     color: var(--error);
@@ -599,6 +649,7 @@ body {
     font-size: 0.8rem;
     color: white;
 }
+
 .nav-profile-dropdown .user-avatar {
     background: #3b82f6;
     margin: 0 auto 6px;
@@ -606,7 +657,8 @@ body {
 
 /* Main content */
 .main-content {
-    margin-top: 56px; /* Height of top nav */
+    margin-top: 56px;
+    /* Height of top nav */
     margin-left: 250px;
     transition: margin-left 0.15s ease-out;
     flex: 1;
@@ -614,6 +666,7 @@ body {
     min-height: calc(100vh - 56px);
     width: calc(100% - 250px);
 }
+
 .main-content.expanded {
     margin-left: 0;
     width: 100%;
@@ -733,6 +786,7 @@ body {
     justify-content: center;
     z-index: 1000;
 }
+
 .modal-container {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -743,11 +797,13 @@ body {
     position: relative;
     box-shadow: var(--shadow-lg);
 }
+
 .modal-container h3 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 1.2rem;
 }
+
 .modal-close-btn {
     position: absolute;
     top: 12px;
@@ -759,18 +815,22 @@ body {
     cursor: pointer;
     line-height: 1;
 }
+
 .modal-close-btn:hover {
     color: var(--text-primary);
 }
+
 .form-group {
     margin-bottom: 14px;
 }
+
 .form-group label {
     display: block;
     margin-bottom: 4px;
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
+
 .modal-input {
     width: 100%;
     padding: 10px 12px;
@@ -780,6 +840,7 @@ body {
     color: var(--text-primary);
     font-size: 0.95rem;
 }
+
 .modal-input:focus {
     outline: none;
     border-color: var(--accent-primary);
