@@ -56,7 +56,7 @@ app.post('/api/login', async (req, res) => {
       `SELECT l.Log_ID, l.Log_Contraseña, u.Usu_ID_Usuario, u.Usu_Nombre, u.Usu_Apellido, u.Usu_Correo
        FROM Login l
        INNER JOIN Usuario u ON l.Usu_ID_Usuario = u.Usu_ID_Usuario
-       WHERE u.Usu_Correo = ? AND l.Log_Activo = 1
+       WHERE u.Usu_Correo = $1 AND l.log_activo = true
        LIMIT 1`,
       [username.trim()]
     );
@@ -64,10 +64,10 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
     const row = rows[0];
-    if (row.Log_Contraseña !== password) {
+    if (row.log_contraseña !== password) {
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
-    const displayName = [row.Usu_Nombre, row.Usu_Apellido].filter(Boolean).join(' ') || row.Usu_Correo;
+    const displayName = [row.usu_nombre, row.usu_apellido].filter(Boolean).join(' ') || row.usu_correo;
     const token = uuidv4();
     validTokens.add(token);
     return res.json({ success: true, token, user: displayName });
@@ -95,10 +95,10 @@ app.get('/api/passwords', authMiddleware, async (req, res) => {
        ORDER BY u.Usu_Nombre, u.Usu_Apellido`
     );
     const list = rows.map(r => ({
-      id: String(r.Log_ID),
+      id: String(r.log_id),
       service: 'SAPRO',
-      username: r.Usu_Correo || '',
-      password: r.Log_Contraseña || '',
+      username: r.usu_correo || '',
+      password: r.log_contraseña || '',
       createdAt: new Date().toISOString()
     }));
     res.json(list);
@@ -113,19 +113,19 @@ app.put('/api/passwords/:id', authMiddleware, async (req, res) => {
   const { password } = req.body;
   if (!password) return res.status(400).json({ error: 'La contraseña es requerida' });
   try {
-    const result = await query('UPDATE Login SET Log_Contraseña = ? WHERE Log_ID = ?', [password, id]);
+    const result = await query('UPDATE Login SET Log_Contraseña = $1 WHERE Log_ID = $2', [password, id]);
     if (!result || result.affectedRows === 0) return res.status(404).json({ error: 'No encontrado' });
     const rows = await query(
       `SELECT l.Log_ID, l.Log_Contraseña, u.Usu_Correo
-       FROM Login l INNER JOIN Usuario u ON l.Usu_ID_Usuario = u.Usu_ID_Usuario WHERE l.Log_ID = ?`,
+       FROM Login l INNER JOIN Usuario u ON l.Usu_ID_Usuario = u.Usu_ID_Usuario WHERE l.Log_ID = $1`,
       [id]
     );
     const r = rows && rows[0];
     res.json({
-      id: String(r.Log_ID),
+      id: String(r.log_id),
       service: 'SAPRO',
-      username: r.Usu_Correo || '',
-      password: r.Log_Contraseña || '',
+      username: r.usu_correo || '',
+      password: r.log_contraseña || '',
       createdAt: new Date().toISOString()
     });
   } catch (err) {
@@ -141,7 +141,7 @@ app.post('/api/passwords', authMiddleware, (req, res) => {
 app.delete('/api/passwords/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await query('UPDATE Login SET Log_Activo = 0 WHERE Log_ID = ?', [id]);
+    const result = await query('UPDATE Login SET log_activo = false WHERE log_id = $1', [id]);
     if (!result || result.affectedRows === 0) return res.status(404).json({ error: 'No encontrado' });
     res.json({ success: true });
   } catch (err) {
@@ -159,7 +159,7 @@ app.post('/api/upload', authMiddleware, upload.single('pdf'), async (req, res) =
   try {
     await query(
       `INSERT INTO Documento (Doc_Nombre, Doc_Descripcion, Doc_Archivo, Pro_ID_Proyecto, Tdd_ID_Tipo_Documento)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5)`,
       [req.file.originalname || req.file.filename, descripcion, req.file.filename, projectId, tipoDocumentoId]
     );
     res.json({
@@ -184,15 +184,15 @@ app.get('/api/files', authMiddleware, async (req, res) => {
        FROM Documento ORDER BY Doc_ID_Documento DESC`
     );
     const files = rows.map(r => {
-      const filePath = path.join(uploadsDir, r.Doc_Archivo);
+      const filePath = path.join(uploadsDir, r.doc_archivo);
       let size = 0;
       if (fs.existsSync(filePath)) size = fs.statSync(filePath).size;
       return {
-        filename: r.Doc_Archivo,
-        originalname: r.Doc_Nombre || r.Doc_Archivo,
+        filename: r.doc_archivo,
+        originalname: r.doc_nombre || r.doc_archivo,
         size,
         uploadedAt: new Date().toISOString(),
-        id: r.Doc_ID_Documento
+        id: r.doc_id_documento
       };
     });
     res.json(files);
@@ -212,7 +212,7 @@ app.delete('/api/files/:filename', authMiddleware, async (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(uploadsDir, filename);
   try {
-    await query('DELETE FROM Documento WHERE Doc_Archivo = ?', [filename]);
+    await query('DELETE FROM Documento WHERE Doc_Archivo = $1', [filename]);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     res.json({ success: true });
   } catch (err) {
@@ -259,7 +259,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
     const fechaInicioVal = fechaInicio || new Date().toISOString().slice(0, 10);
     await query(
       `INSERT INTO Proyecto (Pro_Nombre, Pro_Descripcion, Pro_Fecha_Inicio, Pro_Fecha_Finalizacion, Pro_Costo_Proyecto, Epr_ID_Estatus_Proyecto)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [nombre.trim(), descripcion || null, fechaInicioVal, fechaFin || null, costo ? Number(costo) : null, estadoId ? Number(estadoId) : 1]
     );
     const rows = await query(
@@ -295,21 +295,21 @@ app.get('/api/commissions', authMiddleware, async (req, res) => {
     try {
       const estatusRows = await query('SELECT Egs_ID_Estatus_Gasto, Egs_Nombre FROM Estatus_Gasto');
       estatusRows.forEach(r => {
-        statusMap[r.Egs_ID_Estatus_Gasto] = r.Egs_Nombre === 'Pagado' ? 'Pagada' : (r.Egs_Nombre === 'Pendiente' ? 'Pendiente' : r.Egs_Nombre);
+        statusMap[r.egs_id_estatus_gasto] = r.egs_nombre === 'Pagado' ? 'Pagada' : (r.egs_nombre === 'Pendiente' ? 'Pendiente' : r.egs_nombre);
       });
     } catch (_) {}
     const list = rows.map(r => {
-      const employee = [r.Usu_Nombre, r.Usu_Apellido].filter(Boolean).join(' ') || 'Sin nombre';
-      const status = statusMap[r.Egs_ID_Estatus_Gasto] || 'Pendiente';
+      const employee = [r.usu_nombre, r.usu_apellido].filter(Boolean).join(' ') || 'Sin nombre';
+      const status = statusMap[r.egs_id_estatus_gasto] || 'Pendiente';
       return {
-        id: String(r.Gas_ID_Gasto),
+        id: String(r.gas_id_gasto),
         employee,
         project: r.proyecto || '',
         product: 'Comisión',
-        amount: Number(r.Gas_Monto) || 0,
+        amount: Number(r.gas_monto) || 0,
         commissionRate: 0,
         status: status === 'Pagado' || status === 'Pagada' ? 'Pagada' : 'Pendiente',
-        paymentDate: status === 'Pagada' ? (r.Gas_Fecha_Gasto ? String(r.Gas_Fecha_Gasto).slice(0, 10) : null) : null
+        paymentDate: status === 'Pagada' ? (r.gas_fecha_gasto ? String(r.gas_fecha_gasto).slice(0, 10) : null) : null
       };
     });
     res.json(list);
@@ -349,7 +349,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('===========================================');
   console.log('   SAPRO Dashboard Server');
-  console.log('   Base de datos: sistema_proyectos (MySQL)');
+  console.log('   Base de datos: script_sapro (PostgreSQL)');
   console.log('===========================================');
   console.log(`   Local:    http://localhost:${PORT}`);
   console.log(`   Red LAN:  http://${localIP}:${PORT}`);
