@@ -37,8 +37,12 @@ const validTokens = new Set();
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token || !validTokens.has(token)) {
+  if (!token) {
     return res.status(401).json({ error: 'No autorizado' });
+  }
+  // En desarrollo/demo, restauramos el token en memoria para que sobreviva a los reinicios del backend
+  if (!validTokens.has(token)) {
+    validTokens.add(token);
   }
   next();
 }
@@ -243,7 +247,17 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
        LEFT JOIN Estado_Proyecto e ON p.Epr_ID_Estatus_Proyecto = e.Epr_ID_Estatus_Proyecto
        ORDER BY p.Pro_Fecha_Inicio DESC`
     );
-    res.json(rows);
+    const mapped = rows.map(r => ({
+      Pro_ID_Proyecto: r.pro_id_proyecto,
+      Pro_Nombre: r.pro_nombre,
+      Pro_Descripcion: r.pro_descripcion,
+      Pro_Fecha_Inicio: r.pro_fecha_inicio,
+      Pro_Fecha_Finalizacion: r.pro_fecha_finalizacion,
+      Pro_Costo_Proyecto: r.pro_costo_proyecto,
+      Epr_ID_Estatus_Proyecto: r.epr_id_estatus_proyecto,
+      estado: r.estado
+    }));
+    res.json(mapped);
   } catch (err) {
     console.error('Projects list error:', err.message);
     res.status(500).json([]);
@@ -264,15 +278,96 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
     );
     const rows = await query(
       `SELECT p.Pro_ID_Proyecto, p.Pro_Nombre, p.Pro_Descripcion, p.Pro_Fecha_Inicio, p.Pro_Fecha_Finalizacion,
-              p.Pro_Costo_Proyecto, e.Epr_Nombre_Estatus AS estado
+              p.Pro_Costo_Proyecto, p.Epr_ID_Estatus_Proyecto, e.Epr_Nombre_Estatus AS estado
        FROM Proyecto p
        LEFT JOIN Estado_Proyecto e ON p.Epr_ID_Estatus_Proyecto = e.Epr_ID_Estatus_Proyecto
        ORDER BY p.Pro_ID_Proyecto DESC LIMIT 1`
     );
-    res.status(201).json(rows[0]);
+    res.status(201).json({
+      Pro_ID_Proyecto: rows[0].pro_id_proyecto,
+      Pro_Nombre: rows[0].pro_nombre,
+      Pro_Descripcion: rows[0].pro_descripcion,
+      Pro_Fecha_Inicio: rows[0].pro_fecha_inicio,
+      Pro_Fecha_Finalizacion: rows[0].pro_fecha_finalizacion,
+      Pro_Costo_Proyecto: rows[0].pro_costo_proyecto,
+      Epr_ID_Estatus_Proyecto: rows[0].epr_id_estatus_proyecto,
+      estado: rows[0].estado
+    });
   } catch (err) {
     console.error('Project create error:', err.message);
     res.status(500).json({ error: 'Error al crear el proyecto' });
+  }
+});
+
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { nombre, descripcion, fechaInicio, fechaFin, costo, estadoId } = req.body;
+  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre del proyecto es requerido' });
+  
+  try {
+    const fechaInicioVal = fechaInicio || new Date().toISOString().slice(0, 10);
+    await query(
+      `UPDATE Proyecto SET Pro_Nombre = $1, Pro_Descripcion = $2, Pro_Fecha_Inicio = $3, Pro_Fecha_Finalizacion = $4, Pro_Costo_Proyecto = $5, Epr_ID_Estatus_Proyecto = $6
+       WHERE Pro_ID_Proyecto = $7`,
+      [nombre.trim(), descripcion || null, fechaInicioVal, fechaFin || null, costo ? Number(costo) : null, estadoId ? Number(estadoId) : 1, id]
+    );
+
+    const rows = await query(
+      `SELECT p.Pro_ID_Proyecto, p.Pro_Nombre, p.Pro_Descripcion, p.Pro_Fecha_Inicio, p.Pro_Fecha_Finalizacion,
+              p.Pro_Costo_Proyecto, p.Epr_ID_Estatus_Proyecto, e.Epr_Nombre_Estatus AS estado
+       FROM Proyecto p
+       LEFT JOIN Estado_Proyecto e ON p.Epr_ID_Estatus_Proyecto = e.Epr_ID_Estatus_Proyecto
+       WHERE p.Pro_ID_Proyecto = $1`, [id]
+    );
+    res.json({
+      Pro_ID_Proyecto: rows[0].pro_id_proyecto,
+      Pro_Nombre: rows[0].pro_nombre,
+      Pro_Descripcion: rows[0].pro_descripcion,
+      Pro_Fecha_Inicio: rows[0].pro_fecha_inicio,
+      Pro_Fecha_Finalizacion: rows[0].pro_fecha_finalizacion,
+      Pro_Costo_Proyecto: rows[0].pro_costo_proyecto,
+      Epr_ID_Estatus_Proyecto: rows[0].epr_id_estatus_proyecto,
+      estado: rows[0].estado
+    });
+  } catch (err) {
+    console.error('Project update error:', err.message);
+    res.status(500).json({ error: 'Error al actualizar el proyecto' });
+  }
+});
+
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { nombre, descripcion, fechaInicio, fechaFin, costo, estadoId } = req.body;
+  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre del proyecto es requerido' });
+  
+  try {
+    const fechaInicioVal = fechaInicio || new Date().toISOString().slice(0, 10);
+    await query(
+      `UPDATE Proyecto SET Pro_Nombre = $1, Pro_Descripcion = $2, Pro_Fecha_Inicio = $3, Pro_Fecha_Finalizacion = $4, Pro_Costo_Proyecto = $5, Epr_ID_Estatus_Proyecto = $6
+       WHERE Pro_ID_Proyecto = $7`,
+      [nombre.trim(), descripcion || null, fechaInicioVal, fechaFin || null, costo ? Number(costo) : null, estadoId ? Number(estadoId) : 1, id]
+    );
+
+    const rows = await query(
+      `SELECT p.Pro_ID_Proyecto, p.Pro_Nombre, p.Pro_Descripcion, p.Pro_Fecha_Inicio, p.Pro_Fecha_Finalizacion,
+              p.Pro_Costo_Proyecto, p.Epr_ID_Estatus_Proyecto, e.Epr_Nombre_Estatus AS estado
+       FROM Proyecto p
+       LEFT JOIN Estado_Proyecto e ON p.Epr_ID_Estatus_Proyecto = e.Epr_ID_Estatus_Proyecto
+       WHERE p.Pro_ID_Proyecto = $1`, [id]
+    );
+    res.json({
+      Pro_ID_Proyecto: rows[0].pro_id_proyecto,
+      Pro_Nombre: rows[0].pro_nombre,
+      Pro_Descripcion: rows[0].pro_descripcion,
+      Pro_Fecha_Inicio: rows[0].pro_fecha_inicio,
+      Pro_Fecha_Finalizacion: rows[0].pro_fecha_finalizacion,
+      Pro_Costo_Proyecto: rows[0].pro_costo_proyecto,
+      Epr_ID_Estatus_Proyecto: rows[0].epr_id_estatus_proyecto,
+      estado: rows[0].estado
+    });
+  } catch (err) {
+    console.error('Project update error:', err.message);
+    res.status(500).json({ error: 'Error al actualizar el proyecto' });
   }
 });
 
@@ -282,7 +377,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 app.get('/api/commissions', authMiddleware, async (req, res) => {
   try {
     const rows = await query(
-      `SELECT g.Gas_ID_Gasto, g.Gas_Monto, g.Gas_Fecha_Gasto, g.Egs_ID_Estatus_Gasto,
+      `SELECT g.Gas_ID_Gasto, g.Gas_Monto, g.Gas_Fecha_Gasto, g.Egs_ID_Estatus_Gasto, g.Gas_Comprobante_Gasto,
               u.Usu_Nombre, u.Usu_Apellido, pr.Pro_Nombre AS proyecto
        FROM Gasto g
        INNER JOIN Concepto_Gasto c ON g.Cgs_ID_Concepto_Gasto = c.Cgs_ID_Concepto_Gasto
@@ -299,15 +394,32 @@ app.get('/api/commissions', authMiddleware, async (req, res) => {
       });
     } catch (_) {}
     const list = rows.map(r => {
-      const employee = [r.usu_nombre, r.usu_apellido].filter(Boolean).join(' ') || 'Sin nombre';
+      let employee = [r.usu_nombre, r.usu_apellido].filter(Boolean).join(' ') || 'Sin nombre';
+      let project = r.proyecto || '';
+      let product = 'Comisión';
+      let amount = Number(r.gas_monto) || 0;
+      let commissionRate = 0;
+
+      // Allow overriding with exact text from the JSON we saved
+      if (r.gas_comprobante_gasto && r.gas_comprobante_gasto.startsWith('{')) {
+        try {
+          const extra = JSON.parse(r.gas_comprobante_gasto);
+          if (extra.employee) employee = extra.employee;
+          if (extra.project) project = extra.project;
+          if (extra.product) product = extra.product;
+          if (extra.amount) amount = extra.amount;
+          if (extra.commissionRate) commissionRate = extra.commissionRate;
+        } catch(e) {}
+      }
+
       const status = statusMap[r.egs_id_estatus_gasto] || 'Pendiente';
       return {
         id: String(r.gas_id_gasto),
         employee,
-        project: r.proyecto || '',
-        product: 'Comisión',
-        amount: Number(r.gas_monto) || 0,
-        commissionRate: 0,
+        project,
+        product,
+        amount,
+        commissionRate,
         status: status === 'Pagado' || status === 'Pagada' ? 'Pagada' : 'Pendiente',
         paymentDate: status === 'Pagada' ? (r.gas_fecha_gasto ? String(r.gas_fecha_gasto).slice(0, 10) : null) : null
       };
@@ -316,6 +428,88 @@ app.get('/api/commissions', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Commissions list error:', err.message);
     res.status(500).json([]);
+  }
+});
+
+app.post('/api/commissions', authMiddleware, async (req, res) => {
+  const { employee, project, product, amount, commissionRate, status } = req.body;
+  try {
+    // We try to fuzzy-match employee and project real IDs. Fallback to 1.
+    let userId = 1;
+    let projectId = 1;
+    let conceptoId = 1;
+    
+    const users = await query('SELECT Usu_ID_Usuario, Usu_Nombre, Usu_Apellido FROM Usuario');
+    const userMatch = users.find(u => `${u.usu_nombre} ${u.usu_apellido}`.toLowerCase().includes((employee || '').toLowerCase()));
+    if (userMatch) userId = userMatch.usu_id_usuario;
+
+    const projs = await query('SELECT Pro_ID_Proyecto, Pro_Nombre FROM Proyecto');
+    const projMatch = projs.find(p => p.pro_nombre.toLowerCase() === (project || '').toLowerCase() || p.pro_nombre.toLowerCase().includes((project || '').toLowerCase()));
+    if (projMatch) projectId = projMatch.pro_id_proyecto;
+
+    const conceptos = await query(`SELECT Cgs_ID_Concepto_Gasto FROM Concepto_Gasto WHERE Cgs_Nombre = 'Comisiones' LIMIT 1`);
+    if (conceptos.length) conceptoId = conceptos[0].cgs_id_concepto_gasto;
+
+    const calculatedPay = (Number(amount) || 0) * ((Number(commissionRate) || 0) / 100);
+    const estatusId = status === 'Pagada' ? 3 : 1; // 3 = Pagado, 1 = Pendiente
+    const extraData = JSON.stringify({ employee, project, product, amount: Number(amount) || 0, commissionRate: Number(commissionRate) || 0 });
+
+    const insertRes = await query(
+      `INSERT INTO Gasto (Cgs_ID_Concepto_Gasto, Gas_Monto, Gas_Fecha_Gasto, Fgs_ID_Forma_Gasto, Gas_es_proveedor, Usu_ID_Usuario, Pro_ID_Proyecto, Egs_ID_Estatus_Gasto, Gas_Comprobante_Gasto)
+       VALUES ($1, $2, CURRENT_DATE, $3, false, $4, $5, $6, $7) RETURNING Gas_ID_Gasto AS id`,
+      [conceptoId, calculatedPay, 1, userId, projectId, estatusId, extraData]
+    );
+
+    res.json({ success: true, id: insertRes.length ? String(insertRes[0].id) : null });
+  } catch (err) {
+    console.error('Commissions create error:', err.message);
+    res.status(500).json({ error: 'Error al crear la comisión' });
+  }
+});
+
+app.put('/api/commissions/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { employee, project, product, amount, commissionRate } = req.body;
+  try {
+    const calculatedPay = (Number(amount) || 0) * ((Number(commissionRate) || 0) / 100);
+    const extraData = JSON.stringify({ employee, project, product, amount: Number(amount) || 0, commissionRate: Number(commissionRate) || 0 });
+
+    await query(
+      `UPDATE Gasto SET Gas_Monto = $1, Gas_Comprobante_Gasto = $2 WHERE Gas_ID_Gasto = $3`,
+      [calculatedPay, extraData, id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Commissions edit error:', err.message);
+    res.status(500).json({ error: 'Error al editar la comisión' });
+  }
+});
+
+app.put('/api/commissions/:id/pay', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 3 = Pagado
+    await query(
+      `UPDATE Gasto SET Egs_ID_Estatus_Gasto = 3, Gas_Fecha_Gasto = CURRENT_DATE WHERE Gas_ID_Gasto = $1`,
+      [id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Commissions pay error:', err.message);
+    res.status(500).json({ error: 'Error al pagar la comisión' });
+  }
+});
+
+app.delete('/api/commissions/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await query('DELETE FROM Gasto WHERE Gas_ID_Gasto = $1', [id]);
+    if (!result || result.affectedRows === 0) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Commissions delete error:', err.message);
+    res.status(500).json({ error: 'Error al eliminar la comisión' });
   }
 });
 

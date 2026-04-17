@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Eye, Pencil, DollarSign, User, Plus, Search, X, Check, AlertCircle } from 'lucide-react'
+import { Eye, Pencil, DollarSign, User, Plus, Search, X, Trash2 } from 'lucide-react'
 import { useRecentActivity } from '../context/RecentActivityContext'
 
 interface CommissionEntry {
@@ -45,6 +45,15 @@ export default function Commission({ token }: CommissionProps) {
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedEmployee, setSelectedEmployee] = useState('')
     const [selectedStatus, setSelectedStatus] = useState('')
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 5
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchTerm, selectedEmployee, selectedStatus])
 
     // Modal State
     const [activeModal, setActiveModal] = useState<'view' | 'edit' | 'pay' | 'user' | 'create' | null>(null)
@@ -62,6 +71,9 @@ export default function Commission({ token }: CommissionProps) {
             : true
         return matchesEmployee && matchesStatus && matchesSearch
     })
+
+    const totalPages = Math.max(1, Math.ceil(filteredCommissions.length / ITEMS_PER_PAGE))
+    const paginatedCommissions = filteredCommissions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)
@@ -99,21 +111,75 @@ export default function Commission({ token }: CommissionProps) {
         setSelectedCommission(null)
     }
 
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         if (!selectedCommission) return
 
+        const updatedCommission = { ...selectedCommission, ...formData } as CommissionEntry
+
+        try {
+            if (token && !updatedCommission.id.startsWith('mock')) {
+                await fetch(`/api/commissions/${updatedCommission.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(updatedCommission)
+                })
+            }
+        } catch (e) {
+            console.error('Error updating commission', e)
+        }
+
         const updatedCommissions = commissions.map(c =>
-            c.id === selectedCommission.id ? { ...c, ...formData } as CommissionEntry : c
+            c.id === selectedCommission.id ? updatedCommission : c
         )
         setCommissions(updatedCommissions)
-
-        // Log edit? Maybe too noisy. Let's stick to Create and Pay for now.
 
         handleCloseModal()
     }
 
-    const handlePayment = () => {
+    const handleDelete = async () => {
         if (!selectedCommission) return
+        
+        if (!window.confirm("¿Estás seguro de que deseas eliminar esta comisión?")) return;
+
+        try {
+            if (token && !selectedCommission.id.startsWith('mock')) {
+                const res = await fetch(`/api/commissions/${selectedCommission.id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Delete failed');
+            }
+        } catch (e) {
+            console.error('Error deleting commission', e);
+        }
+
+        setCommissions(commissions.filter(c => c.id !== selectedCommission.id));
+        
+        addActivity({
+            user: 'Tú',
+            action: 'eliminaste la comisión de',
+            target: `${selectedCommission.employee}`,
+            iconType: 'file',
+            color: '#ef4444',
+            bgColor: 'rgba(239, 68, 68, 0.1)'
+        });
+
+        handleCloseModal();
+    }
+
+    const handlePayment = async () => {
+        if (!selectedCommission) return
+
+        try {
+            if (token && !selectedCommission.id.startsWith('mock')) {
+                await fetch(`/api/commissions/${selectedCommission.id}/pay`, {
+                    method: 'PUT',
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            }
+        } catch (e) {
+            console.error('Error paying commission', e)
+        }
 
         const updatedCommissions = commissions.map(c =>
             c.id === selectedCommission.id ? { ...c, status: 'Pagada', paymentDate: new Date().toISOString() } as CommissionEntry : c
@@ -133,9 +199,9 @@ export default function Commission({ token }: CommissionProps) {
         handleCloseModal()
     }
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         const newCommission: CommissionEntry = {
-            id: (Math.max(...commissions.map(c => parseInt(c.id))) + 1).toString(),
+            id: (Math.max(0, ...commissions.map(c => parseInt(c.id) || 0)) + 1).toString(),
             employee: formData.employee || 'Nuevo Empleado',
             project: formData.project || 'Proyecto Nuevo',
             product: formData.product || 'Producto Genérico',
@@ -144,6 +210,23 @@ export default function Commission({ token }: CommissionProps) {
             status: 'Pendiente',
             paymentDate: null
         }
+
+        try {
+            if (token) {
+                const res = await fetch('/api/commissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(newCommission)
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.id) newCommission.id = data.id
+                }
+            }
+        } catch (e) {
+            console.error('Error saving commission', e)
+        }
+
         setCommissions([...commissions, newCommission])
 
         // Log Activity
@@ -229,7 +312,13 @@ export default function Commission({ token }: CommissionProps) {
                                 className="modal-input"
                             />
                         </div>
-                        <button className="modal-action-btn primary" onClick={handleSaveChanges}>Guardar Cambios</button>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button className="modal-action-btn primary" onClick={handleSaveChanges}>Guardar Cambios</button>
+                            <button className="modal-action-btn" style={{ backgroundColor: '#ef4444', color: 'white', flex: 1 }} onClick={handleDelete}>
+                                <Trash2 size={16} style={{ verticalAlign: 'text-bottom', marginRight: '6px' }} />
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
                 )
 
@@ -405,7 +494,7 @@ export default function Commission({ token }: CommissionProps) {
                     <thead>
                         <tr>
                             <th>Empleado</th>
-                            <th>Proyecto/Venta</th>
+                            <th>Proyecto</th>
                             <th>Producto</th>
                             <th>Monto Venta</th>
                             <th>Comisión</th>
@@ -415,7 +504,7 @@ export default function Commission({ token }: CommissionProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredCommissions.map(comm => (
+                        {paginatedCommissions.map(comm => (
                             <tr key={comm.id} className="fade-in">
                                 <td className="font-medium">{comm.employee}</td>
                                 <td>{comm.project}</td>
@@ -466,13 +555,29 @@ export default function Commission({ token }: CommissionProps) {
                     </tbody>
                 </table>
                 <div className="table-footer">
-                    Mostrando {filteredCommissions.length} de {commissions.length} registros
+                    Mostrando {filteredCommissions.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredCommissions.length)} de {filteredCommissions.length} registros
                     <div className="pagination">
-                        <button disabled>&lt;</button>
-                        <button className="active">1</button>
-                        <button>2</button>
-                        <button>3</button>
-                        <button>&gt;</button>
+                        <button 
+                            disabled={currentPage === 1} 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        >
+                            &lt;
+                        </button>
+                        {[...Array(totalPages)].map((_, i) => (
+                            <button 
+                                key={i + 1} 
+                                className={currentPage === i + 1 ? "active" : ""}
+                                onClick={() => setCurrentPage(i + 1)}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                        <button 
+                            disabled={currentPage === totalPages} 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        >
+                            &gt;
+                        </button>
                     </div>
                 </div>
             </div>

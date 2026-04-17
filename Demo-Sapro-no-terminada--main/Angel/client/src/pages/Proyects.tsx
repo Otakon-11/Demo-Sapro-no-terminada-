@@ -25,6 +25,7 @@ export default function Projects({ token }: ProjectsProps) {
   const [estados, setEstados] = useState<EstadoProyectoItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [viewProject, setViewProject] = useState<ProyectoItem | null>(null)
   const [form, setForm] = useState({
     nombre: '',
     descripcion: '',
@@ -35,6 +36,7 @@ export default function Projects({ token }: ProjectsProps) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
 
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -53,6 +55,7 @@ export default function Projects({ token }: ProjectsProps) {
   }, [token])
 
   const handleOpenAdd = () => {
+    setEditingId(null)
     setForm({
       nombre: '',
       descripcion: '',
@@ -65,7 +68,22 @@ export default function Projects({ token }: ProjectsProps) {
     setShowModal(true)
   }
 
-  const handleCreate = async () => {
+  const handleOpenEdit = (proj: ProyectoItem) => {
+    setEditingId(proj.Pro_ID_Proyecto)
+    setForm({
+      nombre: proj.Pro_Nombre,
+      descripcion: proj.Pro_Descripcion || '',
+      fechaInicio: proj.Pro_Fecha_Inicio ? proj.Pro_Fecha_Inicio.slice(0, 10) : new Date().toISOString().slice(0, 10),
+      fechaFin: proj.Pro_Fecha_Finalizacion ? proj.Pro_Fecha_Finalizacion.slice(0, 10) : '',
+      costo: proj.Pro_Costo_Proyecto != null ? proj.Pro_Costo_Proyecto.toString() : '',
+      estadoId: proj.Epr_ID_Estatus_Proyecto ? proj.Epr_ID_Estatus_Proyecto.toString() : '1'
+    })
+    setError('')
+    setViewProject(null)
+    setShowModal(true)
+  }
+
+  const handleSave = async () => {
     if (!form.nombre.trim()) {
       setError('El nombre del proyecto es obligatorio')
       return
@@ -73,8 +91,12 @@ export default function Projects({ token }: ProjectsProps) {
     setSaving(true)
     setError('')
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
+      const isEditing = editingId != null
+      const url = isEditing ? `/api/projects/${editingId}` : '/api/projects'
+      const method = isEditing ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers,
         body: JSON.stringify({
           nombre: form.nombre.trim(),
@@ -87,13 +109,17 @@ export default function Projects({ token }: ProjectsProps) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Error al crear')
+        throw new Error(data.error || (isEditing ? 'Error al actualizar' : 'Error al crear'))
       }
-      const newProject = await res.json()
-      setProjects(prev => [newProject, ...prev])
+      const savedProject = await res.json()
+      if (isEditing) {
+        setProjects(prev => prev.map(p => p.Pro_ID_Proyecto === editingId ? savedProject : p))
+      } else {
+        setProjects(prev => [savedProject, ...prev])
+      }
       setShowModal(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al crear el proyecto')
+      setError(e instanceof Error ? e.message : 'Error al guardar el proyecto')
     } finally {
       setSaving(false)
     }
@@ -133,7 +159,7 @@ export default function Projects({ token }: ProjectsProps) {
               </div>
               <div className="kanban-cards">
                 {col.proyectos.map(proj => (
-                  <div key={proj.Pro_ID_Proyecto} className="kanban-card">
+                  <div key={proj.Pro_ID_Proyecto} className="kanban-card" style={{ cursor: 'pointer' }} onClick={() => setViewProject(proj)}>
                     <div className="kanban-card-title">{proj.Pro_Nombre}</div>
                     <div className="kanban-card-desc">{proj.Pro_Descripcion || 'Sin descripción'}</div>
                     <div className="kanban-card-meta">
@@ -155,7 +181,7 @@ export default function Projects({ token }: ProjectsProps) {
             <button type="button" className="modal-close-btn" onClick={() => !saving && setShowModal(false)} aria-label="Cerrar">
               ×
             </button>
-            <h3>Nuevo proyecto</h3>
+            <h3>{editingId != null ? 'Editar proyecto' : 'Nuevo proyecto'}</h3>
             {error && <div className="form-error" style={{ color: 'var(--error)', marginBottom: 12 }}>{error}</div>}
             <div className="form-group">
               <label>Nombre *</label>
@@ -220,11 +246,71 @@ export default function Projects({ token }: ProjectsProps) {
               />
             </div>
             <div className="modal-actions">
-              <button type="button" className="action-btn primary" onClick={handleCreate} disabled={saving}>
-                {saving ? 'Guardando...' : 'Crear proyecto'}
+              <button type="button" className="action-btn primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Guardando...' : (editingId != null ? 'Guardar Cambios' : 'Crear proyecto')}
               </button>
               <button type="button" className="action-btn secondary" onClick={() => !saving && setShowModal(false)}>
                 Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewProject && (
+        <div className="modal-overlay" onClick={() => setViewProject(null)}>
+          <div className="modal-container projects-modal" onClick={e => e.stopPropagation()}>
+            <button type="button" className="modal-close-btn" onClick={() => setViewProject(null)} aria-label="Cerrar">
+              ×
+            </button>
+            <h3>Detalles del Proyecto</h3>
+            
+            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <strong>Nombre:</strong>
+                <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>{viewProject.Pro_Nombre}</div>
+              </div>
+              
+              <div>
+                <strong>Descripción:</strong>
+                <div style={{ color: 'var(--text-muted)', marginTop: '4px', whiteSpace: 'pre-wrap' }}>
+                  {viewProject.Pro_Descripcion || 'Sin descripción detallada.'}
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <strong>Fecha de Inicio:</strong>
+                  <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>{formatDate(viewProject.Pro_Fecha_Inicio)}</div>
+                </div>
+                <div className="form-group">
+                  <strong>Fecha de Finalización:</strong>
+                  <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>{formatDate(viewProject.Pro_Fecha_Finalizacion)}</div>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <strong>Costo del Proyecto:</strong>
+                  <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>{viewProject.Pro_Costo_Proyecto != null ? formatMoney(viewProject.Pro_Costo_Proyecto) : 'No especificado'}</div>
+                </div>
+                <div className="form-group">
+                  <strong>Estado Actual:</strong>
+                  <div style={{ marginTop: '4px', display: 'inline-block' }}>
+                    <span className="kanban-title" style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                      {viewProject.estado || 'Sin asignar'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '30px', justifyContent: 'flex-end', display: 'flex', gap: '10px' }}>
+              <button type="button" className="action-btn primary" onClick={() => handleOpenEdit(viewProject)}>
+                Editar Proyecto
+              </button>
+              <button type="button" className="action-btn secondary" onClick={() => setViewProject(null)}>
+                Cerrar Detalles
               </button>
             </div>
           </div>
